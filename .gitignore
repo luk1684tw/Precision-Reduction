@@ -1,0 +1,10 @@
+__pycache__
+*.txt
+*.jpg
+*.png
+*.pkl
+*.csv
+*.pth
+log
+
+!requirements.txt
