@@ -130,7 +130,8 @@ types = [
 quant_methods = [
     'log',
     'minmax',
-    'tanh'
+    'tanh',
+    'linear'
 ]
 
 model_bits = {
@@ -256,7 +257,8 @@ for typ in types:
                         train=False,
                         input_size=args.input_size)
 
-    result_filename = f'result'
+    #result_filename = f'result'
+    result_filename = {}.format(result)
 
     for q_method in quant_methods:
         for p_bits in model_bits[typ]['param_bits']:
@@ -269,8 +271,10 @@ for typ in types:
                     start = time.time()
                     acc1, acc5 = misc.eval_model(model, val_ds, is_imagenet=is_imagenet)
                     duration = time.time() - start
-                    print(f"{typ}, {q_method}, {p_bits}, {b_bits}, {l_bits}")
-                    print(f"Eval duration: {duration}, acc1: {acc1}, acc5: {acc5}")
+                    #print(f"{typ}, {q_method}, {p_bits}, {b_bits}, {l_bits}")
+                    print('{typ}, {q_method}, {p_bits}, {b_bits}, {l_bits}'.format(typ = typ, q_method = q_method, p_bits = p_bits, b_bits = b_bits, l_bits = l_bits))
+                    #print(f"Eval duration: {duration}, acc1: {acc1}, acc5: {acc5}")
+                    print('Eval duration: {duration}, acc1: {acc1}, acc5: {acc5}'.format(duration = duration, acc1 = acc1, acc5 = acc5))
 
                     rec = {
                         'type': typ,
