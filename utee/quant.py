@@ -30,7 +30,7 @@ def linear_quantize(input, sf, bits):
     clipped_value = torch.clamp(rounded, min_val, max_val) * delta
 
     if bits <= 16:
-        return clipped_value.type(torch.HalfTensor)
+        return clipped_value.type(torch.half)
     else:
         return clipped_value
 

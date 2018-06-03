@@ -184,9 +184,8 @@ def eval_model(model, ds, n_sample=None, ngpu=1, is_imagenet=False):
         # Check the model is torch.float16 or torch.float32
         # if it's torch.float16, half the input precision
         key = list(model.state_dict().keys())[0]
-        if model.state_dict()[key].type() == torch.HalfTensor:
+        if model.state_dict()[key].dtype == torch.float16:
             data = torch.FloatTensor(data).half()
-            print('I am a Half Tensor')
         else:
             data = torch.FloatTensor(data)
 
