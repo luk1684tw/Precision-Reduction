@@ -3,7 +3,7 @@ import torch
 from torch import nn
 from collections import OrderedDict
 import math
-from IPython import embed
+
 
 def compute_integral_part(input, overflow_rate):
     abs_value = input.abs().view(-1)
@@ -11,14 +11,16 @@ def compute_integral_part(input, overflow_rate):
     split_idx = int(overflow_rate * len(sorted_value))
     v = sorted_value[split_idx]
     if isinstance(v, Variable):
-        v = v.data.cpu().numpy()[0]
+        v = v.data.cpu().numpy().item()
     sf = math.ceil(math.log2(v+1e-12))
     return sf
+
 
 def linear_quantize(input, sf, bits):
     assert bits >= 1, bits
     if bits == 1:
         return torch.sign(input) - 1
+
     delta = math.pow(2.0, -sf)
     bound = math.pow(2.0, bits-1)
     min_val = - bound
@@ -26,7 +28,12 @@ def linear_quantize(input, sf, bits):
     rounded = torch.floor(input / delta + 0.5)
 
     clipped_value = torch.clamp(rounded, min_val, max_val) * delta
-    return clipped_value
+
+    if bits <= 16:
+        return clipped_value.type(torch.half)
+    else:
+        return clipped_value
+
 
 def log_minmax_quantize(input, bits):
     assert bits >= 1, bits
@@ -39,6 +46,7 @@ def log_minmax_quantize(input, bits):
     v = torch.exp(v) * s
     return v
 
+
 def log_linear_quantize(input, sf, bits):
     assert bits >= 1, bits
     if bits == 1:
@@ -50,35 +58,37 @@ def log_linear_quantize(input, sf, bits):
     v = torch.exp(v) * s
     return v
 
+
 def min_max_quantize(input, bits):
     assert bits >= 1, bits
     if bits == 1:
         return torch.sign(input) - 1
-    min_val, max_val = input.min(), input.max()
 
+    min_val, max_val = input.min(), input.max()
     if isinstance(min_val, Variable):
-        max_val = float(max_val.data.cpu().numpy()[0])
-        min_val = float(min_val.data.cpu().numpy()[0])
+        max_val = float(max_val.data.cpu().numpy().item())
+        min_val = float(min_val.data.cpu().numpy().item())
 
     input_rescale = (input - min_val) / (max_val - min_val)
 
     n = math.pow(2.0, bits) - 1
     v = torch.floor(input_rescale * n + 0.5) / n
 
-    v =  v * (max_val - min_val) + min_val
+    v = v * (max_val - min_val) + min_val
     return v
+
 
 def tanh_quantize(input, bits):
     assert bits >= 1, bits
     if bits == 1:
         return torch.sign(input)
-    input = torch.tanh(input) # [-1, 1]
-    input_rescale = (input + 1.0) / 2 #[0, 1]
+    input = torch.tanh(input)  # [-1, 1]
+    input_rescale = (input + 1.0) / 2  # [0, 1]
     n = math.pow(2.0, bits) - 1
     v = torch.floor(input_rescale * n + 0.5) / n
-    v = 2 * v - 1 # [-1, 1]
+    v = 2 * v - 1  # [-1, 1]
 
-    v = 0.5 * torch.log((1 + v) / (1 - v)) # arctanh
+    v = 0.5 * torch.log((1 + v) / (1 - v))  # arctanh
     return v
 
 
@@ -99,7 +109,8 @@ class LinearQuant(nn.Module):
     def forward(self, input):
         if self._counter > 0:
             self._counter -= 1
-            sf_new = self.bits - 1 - compute_integral_part(input, self.overflow_rate)
+            sf_new = self.bits - 1 - \
+                compute_integral_part(input, self.overflow_rate)
             self.sf = min(self.sf, sf_new) if self.sf is not None else sf_new
             return input
         else:
@@ -109,6 +120,7 @@ class LinearQuant(nn.Module):
     def __repr__(self):
         return '{}(sf={}, bits={}, overflow_rate={:.3f}, counter={})'.format(
             self.__class__.__name__, self.sf, self.bits, self.overflow_rate, self.counter)
+
 
 class LogQuant(nn.Module):
     def __init__(self, name, bits, sf=None, overflow_rate=0.0, counter=10):
@@ -128,7 +140,8 @@ class LogQuant(nn.Module):
         if self._counter > 0:
             self._counter -= 1
             log_abs_input = torch.log(torch.abs(input))
-            sf_new = self.bits - 1 - compute_integral_part(log_abs_input, self.overflow_rate)
+            sf_new = self.bits - 1 - \
+                compute_integral_part(log_abs_input, self.overflow_rate)
             self.sf = min(self.sf, sf_new) if self.sf is not None else sf_new
             return input
         else:
@@ -138,6 +151,7 @@ class LogQuant(nn.Module):
     def __repr__(self):
         return '{}(sf={}, bits={}, overflow_rate={:.3f}, counter={})'.format(
             self.__class__.__name__, self.sf, self.bits, self.overflow_rate, self.counter)
+
 
 class NormalQuant(nn.Module):
     def __init__(self, name, bits, quant_func):
@@ -157,30 +171,109 @@ class NormalQuant(nn.Module):
     def __repr__(self):
         return '{}(bits={})'.format(self.__class__.__name__, self.bits)
 
-def duplicate_model_with_quant(model, bits, overflow_rate=0.0, counter=10, type='linear'):
+
+def quantize_model_layer_output(model,
+                                bits,
+                                overflow_rate=0.0,
+                                counter=10,
+                                type='linear'):
     """assume that original model has at least a nn.Sequential"""
     assert type in ['linear', 'minmax', 'log', 'tanh']
+
     if isinstance(model, nn.Sequential):
         l = OrderedDict()
         for k, v in model._modules.items():
+            # do not quantize the module if it's not one of these modules
             if isinstance(v, (nn.Conv2d, nn.Linear, nn.BatchNorm1d, nn.BatchNorm2d, nn.AvgPool2d)):
                 l[k] = v
+
                 if type == 'linear':
-                    quant_layer = LinearQuant('{}_quant'.format(k), bits=bits, overflow_rate=overflow_rate, counter=counter)
+                    quant_layer = LinearQuant(f'{k}_quant', bits=bits, overflow_rate=overflow_rate, counter=counter)
                 elif type == 'log':
-                    # quant_layer = LogQuant('{}_quant'.format(k), bits=bits, overflow_rate=overflow_rate, counter=counter)
-                    quant_layer = NormalQuant('{}_quant'.format(k), bits=bits, quant_func=log_minmax_quantize)
+                    # quant_layer = LogQuant(f'{k}_quant', bits=bits, overflow_rate=overflow_rate, counter=counter)
+                    quant_layer = NormalQuant(f'{k}_quant', bits=bits, quant_func=log_minmax_quantize)
                 elif type == 'minmax':
-                    quant_layer = NormalQuant('{}_quant'.format(k), bits=bits, quant_func=min_max_quantize)
-                else:
-                    quant_layer = NormalQuant('{}_quant'.format(k), bits=bits, quant_func=tanh_quantize)
+                    quant_layer = NormalQuant(f'{k}_quant', bits=bits, quant_func=min_max_quantize)
+                elif type == 'tanh':
+                    quant_layer = NormalQuant(f'{k}_quant', bits=bits, quant_func=tanh_quantize)
+
                 l['{}_{}_quant'.format(k, type)] = quant_layer
             else:
-                l[k] = duplicate_model_with_quant(v, bits, overflow_rate, counter, type)
+                l[k] = quantize_model_layer_output(
+                    v, bits, overflow_rate, counter, type)
+
         m = nn.Sequential(l)
         return m
+
     else:
         for k, v in model._modules.items():
-            model._modules[k] = duplicate_model_with_quant(v, bits, overflow_rate, counter, type)
+            model._modules[k] = quantize_model_layer_output(
+                v, bits, overflow_rate, counter, type)
+
         return model
 
+
+def quantize_model_per_layer_output(model,
+                                    layer_output_bits,
+                                    overflow_rate=0.0,
+                                    counter=10,
+                                    type='linear',
+                                    layer_idx=0):
+    """assume that original model has at least a nn.Sequential"""
+    assert type in ['linear', 'minmax', 'log', 'tanh']
+
+    if isinstance(model, nn.Sequential):
+        l = OrderedDict()
+        for k, v in model._modules.items():
+            # do not quantize the module if it's not one of these modules
+            if isinstance(v, (nn.Conv2d, nn.Linear, nn.BatchNorm1d, nn.BatchNorm2d, nn.AvgPool2d)):
+                l[k] = v
+                bits = layer_output_bits[layer_idx]
+
+                if type == 'linear':
+                    quant_layer = LinearQuant('{}_quant'.format(
+                        k), bits=bits, overflow_rate=overflow_rate, counter=counter)
+                elif type == 'log':
+                    # quant_layer = LogQuant('{}_quant'.format(k), bits=bits, overflow_rate=overflow_rate, counter=counter)
+                    quant_layer = NormalQuant('{}_quant'.format(
+                        k), bits=bits, quant_func=log_minmax_quantize)
+                elif type == 'minmax':
+                    quant_layer = NormalQuant('{}_quant'.format(
+                        k), bits=bits, quant_func=min_max_quantize)
+                elif type == 'tanh':
+                    quant_layer = NormalQuant('{}_quant'.format(
+                        k), bits=bits, quant_func=tanh_quantize)
+
+                l['{}_{}_quant'.format(k, type)] = quant_layer
+                layer_idx += 1
+            else:
+                l[k] = quantize_model_per_layer_output(
+                    v, layer_output_bits, overflow_rate, counter, type, layer_idx)
+
+        m = nn.Sequential(l)
+        return m
+
+    else:
+        for k, v in model._modules.items():
+            model._modules[k] = quantize_model_per_layer_output(
+                v, layer_output_bits, overflow_rate, counter, type, layer_idx)
+
+            # Add up number of previous layers
+            layer_idx += count_layers(v)
+
+        return model
+
+
+def count_layers(model):
+    n_layers = 0
+    if isinstance(model, nn.Sequential):
+        for k, v in model._modules.items():
+            if isinstance(v, (nn.Conv2d, nn.Linear, nn.BatchNorm1d, nn.BatchNorm2d, nn.AvgPool2d)):
+                n_layers += 1
+            else:
+                n_layers += count_layers(v)
+    else:
+        for k, v in model._modules.items():
+            n_layers += count_layers(v)
+
+    return n_layers

@@ -1,3 +1,6 @@
+import sys
+sys.path.append('.')
+
 import os
 import numpy as np
 import tqdm
@@ -10,7 +13,7 @@ imagenet_urls = [
 ]
 parser = argparse.ArgumentParser(description='Extract the ILSVRC2012 val dataset')
 parser.add_argument('--in_file', default='val224_compressed.pkl', help='input file path')
-parser.add_argument('--out_root', default='/tmp/public_dataset/pytorch/imagenet-data/', help='output file path')
+parser.add_argument('--out_root', default='~/public_dataset/pytorch/imagenet-data/', help='output file path')
 args = parser.parse_args()
 
 d = misc.load_pickle(args.in_file)

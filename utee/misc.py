@@ -6,7 +6,7 @@ import time
 import numpy as np
 import hashlib
 
-from IPython import embed
+
 
 class Logger(object):
     def __init__(self):
@@ -175,12 +175,23 @@ def eval_model(model, ds, n_sample=None, ngpu=1, is_imagenet=False):
         model = ModelWrapper(model)
     model = model.eval()
     model = torch.nn.DataParallel(model, device_ids=range(ngpu)).cuda()
-
     n_sample = len(ds) if n_sample is None else n_sample
-    for idx, (data, target) in enumerate(tqdm.tqdm(ds, total=n_sample)):
+
+    # for idx, (data, target) in enumerate(tqdm.tqdm(ds, total=n_sample)):
+    for idx, (data, target) in enumerate(ds):
         n_passed += len(data)
-        data =  Variable(torch.FloatTensor(data)).cuda()
+
+        # Check the model is torch.float16 or torch.float32
+        # if it's torch.float16, half the input precision
+        key = list(model.state_dict().keys())[0]
+        if model.state_dict()[key].dtype == torch.float16:
+            data = torch.FloatTensor(data).half()
+        else:
+            data = torch.FloatTensor(data)
+
+        data = Variable(data).cuda()
         indx_target = torch.LongTensor(target)
+
         output = model(data)
         bs = output.size(0)
         idx_pred = output.data.sort(1, descending=True)[1]
@@ -194,8 +205,8 @@ def eval_model(model, ds, n_sample=None, ngpu=1, is_imagenet=False):
         if idx >= n_sample - 1:
             break
 
-    acc1 = correct1 * 1.0 / n_passed
-    acc5 = correct5 * 1.0 / n_passed
+    acc1 = float(correct1) * 1.0 / float(n_passed)
+    acc5 = float(correct5) * 1.0 / float(n_passed)
     return acc1, acc5
 
 def load_state_dict(model, model_urls, model_root):

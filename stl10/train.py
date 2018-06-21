@@ -10,7 +10,7 @@ from torch.autograd import Variable
 
 import dataset
 import model
-from IPython import embed
+
 
 parser = argparse.ArgumentParser(description='PyTorch SVHN Example')
 parser.add_argument('--channel', type=int, default=32, help='first conv channel (default: 32)')

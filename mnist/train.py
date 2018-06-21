@@ -1,3 +1,6 @@
+import sys
+sys.path.append('.')
+
 import argparse
 import os
 import time
@@ -22,7 +25,7 @@ parser.add_argument('--seed', type=int, default=117, help='random seed (default:
 parser.add_argument('--log_interval', type=int, default=100,  help='how many batches to wait before logging training status')
 parser.add_argument('--test_interval', type=int, default=5,  help='how many epochs to wait before another test')
 parser.add_argument('--logdir', default='log/default', help='folder to save to the log')
-parser.add_argument('--data_root', default='/tmp/public_dataset/pytorch/', help='folder to save the model')
+parser.add_argument('--data_root', default='~/public_dataset/pytorch/', help='folder to save the model')
 parser.add_argument('--decreasing_lr', default='80,120', help='decreasing strategy')
 args = parser.parse_args()
 args.logdir = os.path.join(os.path.dirname(__file__), args.logdir)

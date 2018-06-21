@@ -1,10 +1,13 @@
+import sys
+sys.path.append('.')
+
 from utee import misc
 import os
 import os.path
 import numpy as np
 
 
-def get(batch_size, data_root='/tmp/public_dataset/pytorch', train=False, val=True, **kwargs):
+def get(batch_size, data_root='~/public_dataset/pytorch', train=False, val=True, **kwargs):
     data_root = os.path.expanduser(os.path.join(data_root, 'imagenet-data'))
     print("Building IMAGENET data loader, 50000 for train, 50000 for test")
     ds = []

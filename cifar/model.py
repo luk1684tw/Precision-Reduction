@@ -1,6 +1,7 @@
+import torch
 import torch.nn as nn
 import torch.utils.model_zoo as model_zoo
-from IPython import embed
+
 from collections import OrderedDict
 
 from utee import misc
@@ -28,6 +29,29 @@ class CIFAR(nn.Module):
         x = self.classifier(x)
         return x
 
+
+class CIFAR_II(nn.Module):
+    """ CIFAR architecture used in this paper:
+        https://2018.ieeeicassp.org/Papers/ViewPapers_MS.asp?PaperNum=2236
+    """
+    def __init__(self, features, n_channel, num_classes):
+        super().__init__()
+        assert isinstance(features, nn.Sequential), type(features)
+        self.features = features
+        self.classifier = nn.Sequential(
+            nn.Linear(n_channel, n_channel),
+            nn.Linear(n_channel, num_classes)
+        )
+        print(self.features)
+        print(self.classifier)
+
+    def forward(self, x):
+        x = self.features(x)
+        x = x.view(x.size(0), -1)
+        x = self.classifier(x)
+        return x
+
+
 def make_layers(cfg, batch_norm=False):
     layers = []
     in_channels = 3
@@ -45,29 +69,38 @@ def make_layers(cfg, batch_norm=False):
             in_channels = out_channels
     return nn.Sequential(*layers)
 
-def cifar10(n_channel, pretrained=None):
+
+def cifar10(n_channel=128, pretrained=None, use_model_zoo=True):
     cfg = [n_channel, n_channel, 'M', 2*n_channel, 2*n_channel, 'M', 4*n_channel, 4*n_channel, 'M', (8*n_channel, 0), 'M']
     layers = make_layers(cfg, batch_norm=True)
     model = CIFAR(layers, n_channel=8*n_channel, num_classes=10)
+
     if pretrained is not None:
-        m = model_zoo.load_url(model_urls['cifar10'])
+        if use_model_zoo:
+            m = model_zoo.load_url(model_urls['cifar10'])
+        else:
+            m = torch.load(pretrained)
+
         state_dict = m.state_dict() if isinstance(m, nn.Module) else m
         assert isinstance(state_dict, (dict, OrderedDict)), type(state_dict)
         model.load_state_dict(state_dict)
+
     return model
 
-def cifar100(n_channel, pretrained=None):
+
+def cifar100(n_channel=128, pretrained=None, use_model_zoo=True):
     cfg = [n_channel, n_channel, 'M', 2*n_channel, 2*n_channel, 'M', 4*n_channel, 4*n_channel, 'M', (8*n_channel, 0), 'M']
     layers = make_layers(cfg, batch_norm=True)
     model = CIFAR(layers, n_channel=8*n_channel, num_classes=100)
+
     if pretrained is not None:
-        m = model_zoo.load_url(model_urls['cifar100'])
+        if use_model_zoo:
+            m = model_zoo.load_url(model_urls['cifar100'])
+        else:
+            m = torch.load(pretrained)
+
         state_dict = m.state_dict() if isinstance(m, nn.Module) else m
         assert isinstance(state_dict, (dict, OrderedDict)), type(state_dict)
         model.load_state_dict(state_dict)
+
     return model
-
-if __name__ == '__main__':
-    model = cifar10(128, pretrained='log/cifar10/best-135.pth')
-    embed()
-
