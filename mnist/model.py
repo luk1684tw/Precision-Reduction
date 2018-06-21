@@ -1,11 +1,7 @@
-from collections import OrderedDict
-
-import torch
 import torch.nn as nn
+from collections import OrderedDict
 import torch.utils.model_zoo as model_zoo
-
 from utee import misc
-
 print = misc.logger.info
 
 model_urls = {
@@ -39,19 +35,12 @@ class MLP(nn.Module):
         assert input.size(1) == self.input_dims
         return self.model.forward(input)
 
-
-def mnist(input_dims=784, n_hiddens=[256, 256], n_class=10, pretrained=None, use_model_zoo=True):
+def mnist(input_dims=784, n_hiddens=[256, 256], n_class=10, pretrained=None):
     model = MLP(input_dims, n_hiddens, n_class)
-
     if pretrained is not None:
-        if use_model_zoo:
-            m = model_zoo.load_url(model_urls['mnist'])
-        else:
-            m = torch.load(pretrained)
-
+        m = model_zoo.load_url(model_urls['mnist'])
         state_dict = m.state_dict() if isinstance(m, nn.Module) else m
         assert isinstance(state_dict, (dict, OrderedDict)), type(state_dict)
         model.load_state_dict(state_dict)
-
     return model
 
