@@ -10,8 +10,8 @@ from utee import misc, quant, selector
 default_model_root = "/home/j0e1in/.torch/models"
 
 
-def save_model(model, model_name, model_root=f'{default_model_root}'):
-    torch.save(model.state_dict(), f"{model_root}/{model_name}")
+def save_model(model, model_name, model_root='{}'.format(default_model_root)):
+    torch.save(model.state_dict(), "{}/{}".format(model_root ,model_name))
 
 cudnn.benchmark = True
 
@@ -104,7 +104,7 @@ if args.fwd_bits < 32:
 start = time.time()
 acc1, acc5 = misc.eval_model(model_quant, val_ds_quant, ngpu=args.ngpu, is_imagenet=is_imagenet)
 duration = time.time() - start
-print(f"Quant model eval duration: {duration}")
+print("Quant model eval duration: {}".format(duration))
 
 
 print(model_quant)
