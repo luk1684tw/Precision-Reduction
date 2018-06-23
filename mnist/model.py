@@ -40,7 +40,7 @@ class MLP(nn.Module):
         return self.model.forward(input)
 
 
-def mnist(input_dims=784, n_hiddens=[256, 256], n_class=10, pretrained=None, use_model_zoo=True):
+def mnist(input_dims=784, n_hiddens=[512, 512, 512], n_class=10, pretrained=None, use_model_zoo=True):
     model = MLP(input_dims, n_hiddens, n_class)
 
     if pretrained is not None:

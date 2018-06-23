@@ -7,11 +7,11 @@ import torch.backends.cudnn as cudnn
 
 from utee import misc, quant, selector
 
-default_model_root = "/home/j0e1in/.torch/models"
+default_model_root = "/home/NASICLab/nmsocug1/.torch/models"
 
 
 def save_model(model, model_name, model_root='{}'.format(default_model_root)):
-    torch.save(model.state_dict(), "{}/{}".format(model_root ,model_name))
+    torch.save(model.state_dict(), '{}/{}'.format(model_root ,model_name))
 
 cudnn.benchmark = True
 
