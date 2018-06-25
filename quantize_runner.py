@@ -15,9 +15,9 @@ from utee import misc, selector, quant
 
 
 def save_result(result, result_file='result'):
-    result.to_csv(f'{result_file}.csv')
+    result.to_csv('{}.csv'.format(result_file))
 
-    with open(f'{result_file}.pkl', 'wb') as f:
+    with open('{}.pkl'.format(result_file), 'wb') as f:
         pickle.dump(result, f)
 
 
@@ -47,7 +47,7 @@ def bits_len_match(model, param_set, type):
 
     for s in param_set:
         if len(s) != num:
-            raise ValueError(f"``{type}`` should have {num} elements in each list, but got {len(s)}")
+            raise ValueError("``{}`` should have {} elements in each list, but got {}".format(type, num, len(s)))
 
 
 def quantize_model(model_orig,
@@ -136,23 +136,15 @@ quant_methods = [
 model_bits = {
     'mnist': {
         'param_bits': [
-            [32]*8,
-            [16]*8,
-            [8]*8,
-            [4]*8,
-            [7, 7, 5, 5, 4, 4, 4, 4]
+			[32]*8,
+            [5, 5, 4, 4, 4, 4, 4, 4]
         ],
         'batch_norm_bits': [
             []
         ],
         'layer_output_bits': [
-            [32]*4,
-            [16]*4,
-            [8]*4,
-            [4]*4,
-            [3]*4,
-            [2]*4,
-            [4, 5, 4, 2]
+			[32]*4,
+            [4]*4
         ],
     },
 
@@ -256,7 +248,7 @@ for typ in types:
                         train=False,
                         input_size=args.input_size)
 
-    result_filename = f'result'
+    result_filename = '{}'.format(result)
 
     for q_method in quant_methods:
         for p_bits in model_bits[typ]['param_bits']:
@@ -269,8 +261,8 @@ for typ in types:
                     start = time.time()
                     acc1, acc5 = misc.eval_model(model, val_ds, is_imagenet=is_imagenet)
                     duration = time.time() - start
-                    print(f"{typ}, {q_method}, {p_bits}, {b_bits}, {l_bits}")
-                    print(f"Eval duration: {duration}, acc1: {acc1}, acc5: {acc5}")
+                    print("{}, {}, {}, {}, {}".format(typ, q_method, p_bits, b_bits, l_bits))
+                    print("Eval duration: {}, acc1: {}, acc5: {}".format(duration, acc1, acc5))
 
                     rec = {
                         'type': typ,
