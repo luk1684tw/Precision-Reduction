@@ -27,7 +27,7 @@ class MLP(nn.Module):
         for i, n_hidden in enumerate(n_hiddens):
             layers['fc{}'.format(i+1)] = nn.Linear(current_dims, n_hidden)
             layers['relu{}'.format(i+1)] = nn.ReLU()
-            #layers['drop{}'.format(i+1)] = nn.Dropout(0.2)
+            layers['drop{}'.format(i+1)] = nn.Dropout(0.2)
             current_dims = n_hidden
         layers['out'] = nn.Linear(current_dims, n_class)
 
