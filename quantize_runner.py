@@ -130,7 +130,8 @@ types = [
 quant_methods = [
     'log',
     'minmax',
-    'tanh'
+    'tanh',
+    'linear'
 ]
 
 model_bits = {
