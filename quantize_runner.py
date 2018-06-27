@@ -176,8 +176,7 @@ model_bits = {
         ],
         'batch_norm_bits': [
             # cifar10, cifar100 => 14
-            [32]*14,
-            [16]*14,
+            []
         ],
         # # precision of output of each layer
         'layer_output_bits': [
