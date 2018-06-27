@@ -69,7 +69,6 @@ def make_layers(cfg, batch_norm=False):
             else:
                 layers += [conv2d, nn.ReLU()]
             in_channels = out_channels
-    layers += nn.Linear()
     return nn.Sequential(*layers)
 
 
