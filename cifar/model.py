@@ -72,7 +72,7 @@ def make_layers(cfg, batch_norm=False):
 
 def cifar10(n_channel=32, pretrained=None, use_model_zoo=True):
     cfg = [n_channel, n_channel, 'M', 2*n_channel, 2*n_channel, 'M', 4*n_channel, 4*n_channel, 'M', (8*n_channel, 0), 'M']
-    layers = make_layers(cfg, batch_norm=True)
+    layers = make_layers(cfg)
     model = CIFAR(layers, n_channel=8*n_channel, num_classes=10)
 
     if pretrained is not None:
