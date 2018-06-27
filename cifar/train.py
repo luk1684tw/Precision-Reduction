@@ -18,7 +18,7 @@ import model
 
 parser = argparse.ArgumentParser(description='PyTorch CIFAR-X Example')
 parser.add_argument('--type', default='cifar10', help='cifar10|cifar100')
-parser.add_argument('--channel', type=int, default=128, help='first conv channel (default: 32)')
+parser.add_argument('--channel', type=int, default=32, help='first conv channel (default: 32)')
 parser.add_argument('--wd', type=float, default=0.00, help='weight decay')
 parser.add_argument('--batch_size', type=int, default=200, help='input batch size for training (default: 64)')
 parser.add_argument('--epochs', type=int, default=150, help='number of epochs to train (default: 10)')
