@@ -18,6 +18,7 @@ class CIFAR(nn.Module):
         assert isinstance(features, nn.Sequential), type(features)
         self.features = features
         self.classifier = nn.Sequential(
+            nn.Linear(n_channel, n_channel),
             nn.Linear(n_channel, num_classes)
         )
         print(self.features)
@@ -68,11 +69,12 @@ def make_layers(cfg, batch_norm=False):
             else:
                 layers += [conv2d, nn.ReLU()]
             in_channels = out_channels
+    layers += nn.Linear()
     return nn.Sequential(*layers)
 
 
 def cifar10(n_channel=32, pretrained=None, use_model_zoo=True):
-    cfg = [n_channel, n_channel, 'M', 2*n_channel, 2*n_channel, 'M', 4*n_channel, 4*n_channel, 'M', (8*n_channel, 0), 'M']
+    cfg = [n_channel, n_channel, 'M', 2*n_channel, 2*n_channel, 'M', 4*n_channel, 4*n_channel]
     layers = make_layers(cfg)
     model = CIFAR(layers, n_channel=8*n_channel, num_classes=10)
 
