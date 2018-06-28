@@ -121,9 +121,9 @@ args.input_size = 299 if 'inception' in args.type else args.input_size
 
 # types to run
 types = [
-    'mnist',
-    # 'cifar10',
-    # 'cifar100',
+    #'mnist',
+    'cifar10',
+    #'cifar100',
 ]
 
 # quantization methods to test
