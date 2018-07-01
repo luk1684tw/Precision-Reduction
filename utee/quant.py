@@ -188,14 +188,14 @@ def quantize_model_layer_output(model,
                 l[k] = v
 
                 if type == 'linear':
-                    quant_layer = LinearQuant('{k}_quant'.format(k=k), bits=bits, overflow_rate=overflow_rate, counter=counter)
+                    quant_layer = LinearQuant('{}_quant'.format(k), bits=bits, overflow_rate=overflow_rate, counter=counter)
                 elif type == 'log':
                     # quant_layer = LogQuant(f'{k}_quant', bits=bits, overflow_rate=overflow_rate, counter=counter)
-                    quant_layer = NormalQuant('{k}_quant'.format(k=k), bits=bits, quant_func=log_minmax_quantize)
+                    quant_layer = NormalQuant('{}_quant'.format(k), bits=bits, quant_func=log_minmax_quantize)
                 elif type == 'minmax':
-                    quant_layer = NormalQuant('{k}_quant'.format(k=k), bits=bits, quant_func=min_max_quantize)
+                    quant_layer = NormalQuant('{}_quant'.format(k), bits=bits, quant_func=min_max_quantize)
                 elif type == 'tanh':
-                    quant_layer = NormalQuant('{k}_quant'.format(k=k), bits=bits, quant_func=tanh_quantize)
+                    quant_layer = NormalQuant('{}_quant'.format(k), bits=bits, quant_func=tanh_quantize)
 
                 l['{}_{}_quant'.format(k, type)] = quant_layer
             else:

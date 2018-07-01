@@ -4,7 +4,7 @@ sys.path.append('.')
 import os
 import numpy as np
 import tqdm
-import misc
+from utee import misc
 import argparse
 import cv2
 

@@ -18,6 +18,7 @@ class CIFAR(nn.Module):
         assert isinstance(features, nn.Sequential), type(features)
         self.features = features
         self.classifier = nn.Sequential(
+            nn.Linear(n_channel, n_channel),
             nn.Linear(n_channel, num_classes)
         )
         print(self.features)
@@ -59,6 +60,7 @@ def make_layers(cfg, batch_norm=False):
         if v == 'M':
             layers += [nn.MaxPool2d(kernel_size=2, stride=2)]
         else:
+            print(v);
             padding = v[1] if isinstance(v, tuple) else 1
             out_channels = v[0] if isinstance(v, tuple) else v
             conv2d = nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=padding)
@@ -70,9 +72,9 @@ def make_layers(cfg, batch_norm=False):
     return nn.Sequential(*layers)
 
 
-def cifar10(n_channel=128, pretrained=None, use_model_zoo=True):
+def cifar10(n_channel=32, pretrained=None, use_model_zoo=True):
     cfg = [n_channel, n_channel, 'M', 2*n_channel, 2*n_channel, 'M', 4*n_channel, 4*n_channel, 'M', (8*n_channel, 0), 'M']
-    layers = make_layers(cfg, batch_norm=True)
+    layers = make_layers(cfg)
     model = CIFAR(layers, n_channel=8*n_channel, num_classes=10)
 
     if pretrained is not None:

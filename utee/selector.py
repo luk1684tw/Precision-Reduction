@@ -21,7 +21,7 @@ def mnist(cuda=True, model_root=None, **kwargs):
     from mnist import model, dataset
 
     use_model_zoo = False if model_root else True
-    m = model.mnist(pretrained=os.path.join(model_root, 'mnist.pth'),
+    m = model.mnist(pretrained=os.path.join(model_root, 'mnist_paper.pth'),
                     use_model_zoo=use_model_zoo,
                     **kwargs)
     if cuda:
@@ -43,7 +43,7 @@ def cifar10(cuda=True, model_root=None, **kwargs):
     from cifar import model, dataset
 
     use_model_zoo = False if model_root else True
-    m = model.cifar10(pretrained=os.path.join(model_root, 'cifar10.pth'),
+    m = model.cifar10(pretrained=os.path.join(model_root, 'cifar10_paper.pth'),
                       use_model_zoo=use_model_zoo,
                       **kwargs)
     if cuda:
